@@ -1,4 +1,6 @@
 const responseDiv = document.getElementById('responseDiv');
+const loadingOverlay = document.getElementById('loading-overlay');
+const resultsIcon = document.getElementById('results-icon');
 
 const questions = [
     {
@@ -70,13 +72,9 @@ const questions = [
 
 let currentQuestionIndex = 0;
 let answers = {};
-let scores = {
-    cpu: 0,
-    gpu: 0,
-    ram: 0,
-    storage: 0
-};
+let otherSpecifications = {};
 
+// Elementos DOM
 const welcomeScreen = document.getElementById('welcome-screen');
 const questionScreen = document.getElementById('question-screen');
 const questionContainer = document.getElementById('question-container');
@@ -87,13 +85,19 @@ const prevBtn = document.getElementById('prev-btn');
 const startBtn = document.getElementById('start-test');
 const restartBtn = document.getElementById('restart-test');
 
-startBtn.addEventListener('click', () => {
+// Event Listeners
+startBtn.addEventListener('click', startTest);
+nextBtn.addEventListener('click', goToNextQuestion);
+prevBtn.addEventListener('click', goToPreviousQuestion);
+restartBtn.addEventListener('click', restartTest);
+
+function startTest() {
     welcomeScreen.classList.add('hidden');
     questionScreen.classList.remove('hidden');
     showQuestion(currentQuestionIndex);
-});
+}
 
-nextBtn.addEventListener('click', () => {
+function goToNextQuestion() {
     if (!validateAnswer()) return;
     
     saveAnswer();
@@ -103,31 +107,33 @@ nextBtn.addEventListener('click', () => {
         showQuestion(currentQuestionIndex);
         updateProgress();
     } else {
-        questionScreen.classList.add('hidden');
-        resultsScreen.classList.remove('hidden');
-        generateApiText();
+        finishTest();
     }
-});
+}
 
-prevBtn.addEventListener('click', () => {
+function goToPreviousQuestion() {
     currentQuestionIndex--;
     showQuestion(currentQuestionIndex);
     updateProgress();
-});
+}
 
-restartBtn.addEventListener('click', () => {
+function restartTest() {
     currentQuestionIndex = 0;
     answers = {};
+    otherSpecifications = {};
     resultsScreen.classList.add('hidden');
     welcomeScreen.classList.remove('hidden');
     progressFill.style.width = '0%';
-});
+    resultsIcon.classList.add('hidden');
+}
 
 function showQuestion(index) {
     const question = questions[index];
     
     prevBtn.classList.toggle('hidden', index === 0);
-    nextBtn.innerHTML = index === questions.length - 1 ? 'Ver Resultados <i class="fas fa-arrow-right ml-2"></i>' : 'Próxima Pergunta <i class="fas fa-arrow-right ml-2"></i>';
+    nextBtn.innerHTML = index === questions.length - 1 
+        ? 'Ver Resultados <i class="fas fa-arrow-right ml-2"></i>' 
+        : 'Próxima Pergunta <i class="fas fa-arrow-right ml-2"></i>';
     
     let html = `
         <div class="mb-2">
@@ -138,18 +144,38 @@ function showQuestion(index) {
         question.options.forEach(option => {
             const isChecked = answers[question.id] === option.value ? 'checked' : '';
             html += `
-                <div class="flex items-center mb-3">
-                    <input type="radio" id="${question.id}-${option.value}" name="${question.id}" value="${option.value}" ${isChecked}
-                        class="h-4 w-4 text-blue-500 focus:ring-blue-400 border-gray-300">
+                <div class="flex items-start mb-3">
+                    <input type="radio" id="${question.id}-${option.value}" 
+                           name="${question.id}" 
+                           value="${option.value}" 
+                           ${isChecked}
+                           class="h-4 w-4 text-blue-500 focus:ring-blue-400 border-gray-300 mt-1"
+                           onchange="handleRadioChange('${question.id}', '${option.value}')">
                     <label for="${question.id}-${option.value}" class="ml-2 text-gray-700">${option.label}</label>
                 </div>
             `;
+            
+            if (option.value === 'other' && (isChecked || question.id in otherSpecifications)) {
+                const specValue = otherSpecifications[question.id] || '';
+                html += `
+                    <div id="${question.id}-other-spec" class="ml-6 mb-3 mt-1">
+                        <input type="text" 
+                               id="${question.id}-other-text" 
+                               placeholder="Por favor, especifique"
+                               value="${specValue}"
+                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                `;
+            }
         });
     } else if (question.type === 'text') {
         const textValue = answers[question.id] || '';
         html += `
-            <input type="text" id="${question.id}" name="${question.id}" value="${textValue}"
-                class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+            <input type="text" 
+                   id="${question.id}" 
+                   name="${question.id}" 
+                   value="${textValue}"
+                   class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
         `;
     }
     
@@ -162,13 +188,45 @@ function showQuestion(index) {
     }, 300);
 }
 
+window.handleRadioChange = function(questionId, value) {
+    const specDiv = document.getElementById(`${questionId}-other-spec`);
+    const container = document.querySelector(`input[name="${questionId}"][value="other"]`).parentNode;
+
+    if (value === 'other') {
+        if (!specDiv) {
+            const html = `
+                <div id="${questionId}-other-spec" class="ml-6 mb-3 mt-1">
+                    <input type="text" 
+                           id="${questionId}-other-text" 
+                           placeholder="Por favor, especifique"
+                           class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            `;
+            container.insertAdjacentHTML('afterend', html);
+        }
+    } else {
+        if (specDiv) {
+            specDiv.remove();
+        }
+    }
+};
+
 function validateAnswer() {
     const question = questions[currentQuestionIndex];
+    
     if (question.type === 'radio') {
         const selectedOption = document.querySelector(`input[name="${question.id}"]:checked`);
         if (!selectedOption) {
             alert('Por favor, selecione uma opção para continuar.');
             return false;
+        }
+        
+        if (selectedOption.value === 'other') {
+            const specInput = document.getElementById(`${question.id}-other-text`);
+            if (!specInput || !specInput.value.trim()) {
+                alert('Por favor, especifique a opção "Outro".');
+                return false;
+            }
         }
     } else if (question.type === 'text') {
         const textInput = document.getElementById(question.id);
@@ -183,9 +241,19 @@ function validateAnswer() {
 
 function saveAnswer() {
     const question = questions[currentQuestionIndex];
+    
     if (question.type === 'radio') {
         const selectedOption = document.querySelector(`input[name="${question.id}"]:checked`);
-        answers[question.id] = selectedOption.value;
+        if (selectedOption) {
+            answers[question.id] = selectedOption.value;
+            
+            if (selectedOption.value === 'other') {
+                const specInput = document.getElementById(`${question.id}-other-text`);
+                if (specInput) {
+                    otherSpecifications[question.id] = specInput.value.trim();
+                }
+            }
+        }
     } else if (question.type === 'text') {
         const textInput = document.getElementById(question.id);
         answers[question.id] = textInput.value.trim();
@@ -197,54 +265,152 @@ function updateProgress() {
     progressFill.style.width = `${progress}%`;
 }
 
+function finishTest() {
+    questionScreen.classList.add('hidden');
+    resultsScreen.classList.remove('hidden');
+    generateApiText();
+}
 
 function generateApiText() {
-    const getLabel = (id, value) => {
+    const getDisplayValue = (id) => {
+        const answer = answers[id];
+        if (answer === 'other') {
+            return otherSpecifications[id] || 'Não especificado';
+        }
+        
         const question = questions.find(q => q.id === id);
-        if (!question) return value;
-        const option = question.options.find(o => o.value === value);
-        return option ? option.label : value;
+        if (!question) return answer;
+        
+        const option = question.options.find(o => o.value === answer);
+        return option ? option.label : answer;
     };
 
     const textContent = 
-`--- Respostas do Diagnóstico de Hardware ---
-Sistema Operacional: ${getLabel('os', answers['os'])}
-Placa de Vídeo (GPU): ${getLabel('gpu', answers['gpu'])}
-Memória RAM: ${getLabel('ram', answers['ram'])}
-Processador (CPU): ${getLabel('cpu', answers['cpu'])}
-Armazenamento disponível: ${getLabel('storage', answers['storage'])}
-Software desejado: ${answers['software']}
----------------------------------------------`;
+`--- Diagnóstico de Hardware ---
+Sistema Operacional: ${getDisplayValue('os')}
+Placa de Vídeo (GPU): ${getDisplayValue('gpu')}
+Memória RAM: ${getDisplayValue('ram')}
+Processador (CPU): ${getDisplayValue('cpu')}
+Armazenamento disponível: ${getDisplayValue('storage')}
+Software desejado: ${answers['software'] || 'Não especificado'}
+---------------------------------`;
     
-    console.log('--- Dados para a API ---');
-    console.log(textContent);
-    console.log('-------------------------');
+    console.log('Dados para análise:', textContent);
     sendMessage(textContent);
 }
 
 async function sendMessage(userMessage) {
     if (!userMessage) return;
 
-    const responseDiv = document.getElementById('responseDiv'); // Acesso ao div de resposta
+    loadingOverlay.classList.remove('hidden');
+    responseDiv.innerHTML = '';
 
     try {
-        const modelResponse = await fetch("/chat", {
+        const response = await fetch("/api/chat", { // AQUI ESTÁ A CORREÇÃO! A rota correta é /api/chat
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                message: userMessage,
-            }),
+            headers: { 
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify({ message: userMessage }),
         });
 
-        const data = await modelResponse.json();
-        if (data && data.response) {
-            responseDiv.textContent = `\n ${data.response}`;
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result && result.data && result.data.response) {
+            formatResponse(result.data.response);
         } else {
-            responseDiv.textContent = "\nAssistente: Erro na resposta.";
+            showError("Resposta inválida do servidor.");
         }
     } catch (err) {
-        console.error(err);
-        responseDiv.textContent = "\nAssistente: Erro ao processar sua mensagem.";
+        console.error("Erro na requisição:", err);
+        showError("Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.");
+    } finally {
+        loadingOverlay.classList.add('hidden');
     }
 }
-  
+
+function formatResponse(responseText) {
+    let formattedResponse = responseText;
+
+    // Título de Compatibilidade
+    const titleRegex = /^(✅|❌) (.*)/;
+    if (formattedResponse.match(titleRegex)) {
+        const [fullMatch, icon, title] = formattedResponse.match(titleRegex);
+        if (icon === '❌') {
+            resultsIcon.className = 'fas fa-times-circle text-red-500 text-5xl mb-4';
+        } else {
+            resultsIcon.className = 'fas fa-check-circle text-green-500 text-5xl mb-4';
+        }
+        resultsIcon.classList.remove('hidden');
+        formattedResponse = formattedResponse.replace(fullMatch, `<h3 class="text-2xl font-bold text-gray-800 mb-3">${icon} ${title}</h3>`);
+    }
+
+    // Tabela
+    const tableRegex = /\|(.*)\n\|---(.*)\n([\s\S]*?)(?=\n\n|$)/;
+    const tableMatch = formattedResponse.match(tableRegex);
+
+    if (tableMatch) {
+        const [fullTable, headerLine, separatorLine, bodyContent] = tableMatch;
+        const headers = headerLine.split('|').map(h => h.trim()).filter(h => h);
+        const rows = bodyContent.split('\n').filter(r => r.trim() !== '');
+
+        let tableHtml = '<table class="min-w-full divide-y divide-gray-200 mt-4 mb-4 shadow-sm rounded-lg overflow-hidden">';
+        tableHtml += '<thead class="bg-blue-100">';
+        tableHtml += '<tr>';
+        headers.forEach(header => {
+            tableHtml += `<th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">${header}</th>`;
+        });
+        tableHtml += '</tr>';
+        tableHtml += '</thead>';
+        tableHtml += '<tbody class="bg-white divide-y divide-gray-200">';
+
+        rows.forEach(row => {
+            const cells = row.split('|').map(c => c.trim()).filter(c => c);
+            if (cells.length === headers.length) {
+                tableHtml += '<tr>';
+                cells.forEach(cell => {
+                    tableHtml += `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${cell}</td>`;
+                });
+                tableHtml += '</tr>';
+            }
+        });
+        tableHtml += '</tbody>';
+        tableHtml += '</table>';
+
+        formattedResponse = formattedResponse.replace(fullTable, tableHtml);
+    }
+    
+    // Outros formatos (negrito, listas, parágrafos)
+    formattedResponse = formattedResponse
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-700">$1</strong>')
+        .replace(/^(###|##|#) (.*)$/m, (match, p1, p2) => {
+            const size = p1.length === 3 ? 'text-xl' : p1.length === 2 ? 'text-2xl' : 'text-3xl';
+            return `<h4 class="${size} font-bold mt-6 mb-2 text-gray-800">${p2}</h4>`;
+        })
+        .replace(/^\s*- (.*)$/gm, (match, p1) => `<li><i class="fas fa-circle text-blue-400 text-xs mr-2"></i>${p1}</li>`)
+        .replace(/(<br>|^)<li>/g, '<ul><li>')
+        .replace(/<\/li><br>/g, '</li>')
+        .replace(/<\/li><ul>/g, '</li></ul>')
+        .replace(/\n\n/g, '<p>')
+        .replace(/\n/g, '<br>')
+        .trim();
+
+    responseDiv.innerHTML = `<div class="prose max-w-none">${formattedResponse}</div>`;
+}
+
+function showError(message) {
+    loadingOverlay.classList.add('hidden');
+    resultsIcon.classList.add('hidden');
+    responseDiv.innerHTML = `
+        <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            ${message}
+        </div>
+    `;
+}
+

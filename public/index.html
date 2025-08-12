@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen bg-gray-50">
     <header class="gradient-bg text-white">
         <div class="container mx-auto px-6 py-8">
             <div class="flex justify-between items-center">
@@ -83,15 +83,14 @@
             
             <div id="results-screen" class="hidden p-8">
                 <div class="text-center mb-8">
-                    <i class="fas fa-check-circle text-green-500 text-5xl mb-4"></i>
+                    <i class="fas fa-check-circle text-green-500 text-5xl mb-4 hidden" id="results-icon"></i>
                     <h2 class="text-2xl font-bold text-gray-800 mb-2">Análise Concluída!</h2>
                     <p class="text-gray-600">Com base nas suas respostas, aqui está a nossa recomendação:</p>
                 </div>
                 
-                <div id="recommendation-result" class="bg-blue-50 border border-blue-100 rounded-lg p-5 mb-8 text-center">
-                    <div id="recommendations" class="text-blue-700 font-medium">
-                        <p id="responseDiv"></p>
-                    </div>
+                <div id="recommendation-result" class="bg-blue-50 border border-blue-100 rounded-lg p-5 mb-8">
+                    <div id="responseDiv" class="text-blue-700 font-medium text-left">
+                        </div>
                 </div>
                 
                 <div class="flex justify-center items-center space-x-4">
@@ -116,7 +115,15 @@
         </div>
     </footer>
 
-    <script src="./scripts/main.js"></script>    
-    <script src="script.js"></script>
+    <script src="./scripts/main.js"></script>
+    <script src="./scripts/script.js"></script>
+
+    <div id="loading-overlay" class="fixed inset-0 bg-gray-50 bg-opacity-90 flex items-center justify-center z-50 hidden">
+        <div class="text-center p-8 bg-white rounded-xl shadow-lg">
+            <div class="loading-spinner"></div>
+            <p class="text-xl font-semibold text-gray-700 mt-4 animate-pulse">Analisando seu sistema...</p>
+            <p class="text-sm text-gray-500 mt-2">Isso pode levar alguns instantes.</p>
+        </div>
+    </div>
 </body>
 </html>
