@@ -1,7 +1,7 @@
 # HardIA - Diagnóstico Inteligente de Hardware 🚀
 
 <p align="center">
-  <img src="https://assets/banner-hardia.png" alt="Banner do HardIA" width="600"/>
+  <img src="https://github.com/EmillyBudriBognar/HardIA/blob/main/public/assets/banner-hardia.png" alt="Banner do HardIA" width="600"/>
 </p>
 
 ## ✨ Visão Geral
