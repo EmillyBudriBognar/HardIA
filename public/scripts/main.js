@@ -1,6 +1,14 @@
 const responseDiv = document.getElementById('responseDiv');
 const loadingOverlay = document.getElementById('loading-overlay');
 const resultsIcon = document.getElementById('results-icon');
+const apiKey =
+  "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";
+
+const url = "https://api.openai.com/v1/chat/completions";
+
+const prompt =
+  "Receba as configurações do PC de um usuário, como processador, memória RAM, placa de vídeo e outros componentes, e compare essas informações com os requisitos mínimos e recomendados de um software ou jogo específico. Após comparar as especificações do sistema, forneça uma análise clara e objetiva sobre a capacidade do computador em rodar o software/jogo solicitado. Comece com um feedback direto, dizendo se o sistema é ou não capaz de rodar o software/jogo, seguido de uma breve explicação sobre o que atende ou não aos requisitos, com sugestões de melhorias, se necessário. Use uma linguagem simples e direta, sem exageros. Exemplo de saída: Seu PC está apto! 😀 Seu processador, memória RAM e placa de vídeo são mais que suficientes para rodar o jogo com bom desempenho. No entanto, se você deseja uma experiência ainda mais fluida, um monitor com alta taxa de atualização pode ser uma boa adição. Ou Seu PC não está apto 😞 Seu processador e placa de vídeo não atendem aos requisitos mínimos, o que pode resultar em desempenho abaixo do esperado. Recomendo uma atualização para uma placa de vídeo mais recente, como a NVIDIA GTX 1660 ou superior. Limita sua resposta em 300 caracteres. Aqui estão os dados:";
+
 
 const questions = [
     {
@@ -266,151 +274,58 @@ function updateProgress() {
 }
 
 function finishTest() {
-    questionScreen.classList.add('hidden');
-    resultsScreen.classList.remove('hidden');
     generateApiText();
 }
 
+
+//formata a mensagem para a ia
 function generateApiText() {
-    const getDisplayValue = (id) => {
-        const answer = answers[id];
-        if (answer === 'other') {
-            return otherSpecifications[id] || 'Não especificado';
-        }
-        
-        const question = questions.find(q => q.id === id);
-        if (!question) return answer;
-        
-        const option = question.options.find(o => o.value === answer);
-        return option ? option.label : answer;
-    };
 
     const textContent = 
-`--- Diagnóstico de Hardware ---
-Sistema Operacional: ${getDisplayValue('os')}
-Placa de Vídeo (GPU): ${getDisplayValue('gpu')}
-Memória RAM: ${getDisplayValue('ram')}
-Processador (CPU): ${getDisplayValue('cpu')}
-Armazenamento disponível: ${getDisplayValue('storage')}
-Software desejado: ${answers['software'] || 'Não especificado'}
----------------------------------`;
+`Respostas do Diagnóstico de Hardware ---
+Sistema Operacional: ${ answers['os']}
+Placa de Vídeo (GPU): ${ answers['gpu']}
+Memória RAM: ${answers['ram']}
+Processador (CPU): ${ answers['cpu']}
+Armazenamento disponível: ${answers['storage']}
+Software desejado: ${answers['software']}`;
     
-    console.log('Dados para análise:', textContent);
-    sendMessage(textContent);
+    console.log(textContent);
+    getOpenAIResponse(prompt + textContent);
 }
 
-async function sendMessage(userMessage) {
-    if (!userMessage) return;
 
-    loadingOverlay.classList.remove('hidden');
-    responseDiv.innerHTML = '';
+//Envia e recebe resposta da ia
+async function getOpenAIResponse(promptText) {
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+         Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "user",
+            content: promptText, // O prompt enviado para o modelo
+          },
+        ],
+        max_tokens: 150,
+      }),
+    });
 
-    try {
-        const response = await fetch("/api/chat", { // AQUI ESTÁ A CORREÇÃO! A rota correta é /api/chat
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify({ message: userMessage }),
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+        questionScreen.classList.add('hidden');
+        resultsScreen.classList.remove('hidden');
+          if (data.choices && data.choices.length > 0) {
+              console.log("Resposta da IA:", data.choices[0].message.content);
+              document.getElementById("responseDiv").innerText = data.choices[0].message.content;
+         } else {
+              console.error("Nenhuma resposta encontrada.");
         }
-
-        const result = await response.json();
-        
-        if (result && result.data && result.data.response) {
-            formatResponse(result.data.response);
-        } else {
-            showError("Resposta inválida do servidor.");
-        }
-    } catch (err) {
-        console.error("Erro na requisição:", err);
-        showError("Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.");
-    } finally {
-        loadingOverlay.classList.add('hidden');
-    }
+  } catch (error) {
+    console.error("Erro ao obter resposta:", error);
+  }
 }
-
-function formatResponse(responseText) {
-    let formattedResponse = responseText;
-
-    // Título de Compatibilidade
-    const titleRegex = /^(✅|❌) (.*)/;
-    if (formattedResponse.match(titleRegex)) {
-        const [fullMatch, icon, title] = formattedResponse.match(titleRegex);
-        if (icon === '❌') {
-            resultsIcon.className = 'fas fa-times-circle text-red-500 text-5xl mb-4';
-        } else {
-            resultsIcon.className = 'fas fa-check-circle text-green-500 text-5xl mb-4';
-        }
-        resultsIcon.classList.remove('hidden');
-        formattedResponse = formattedResponse.replace(fullMatch, `<h3 class="text-2xl font-bold text-gray-800 mb-3">${icon} ${title}</h3>`);
-    }
-
-    // Tabela
-    const tableRegex = /\|(.*)\n\|---(.*)\n([\s\S]*?)(?=\n\n|$)/;
-    const tableMatch = formattedResponse.match(tableRegex);
-
-    if (tableMatch) {
-        const [fullTable, headerLine, separatorLine, bodyContent] = tableMatch;
-        const headers = headerLine.split('|').map(h => h.trim()).filter(h => h);
-        const rows = bodyContent.split('\n').filter(r => r.trim() !== '');
-
-        let tableHtml = '<table class="min-w-full divide-y divide-gray-200 mt-4 mb-4 shadow-sm rounded-lg overflow-hidden">';
-        tableHtml += '<thead class="bg-blue-100">';
-        tableHtml += '<tr>';
-        headers.forEach(header => {
-            tableHtml += `<th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">${header}</th>`;
-        });
-        tableHtml += '</tr>';
-        tableHtml += '</thead>';
-        tableHtml += '<tbody class="bg-white divide-y divide-gray-200">';
-
-        rows.forEach(row => {
-            const cells = row.split('|').map(c => c.trim()).filter(c => c);
-            if (cells.length === headers.length) {
-                tableHtml += '<tr>';
-                cells.forEach(cell => {
-                    tableHtml += `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${cell}</td>`;
-                });
-                tableHtml += '</tr>';
-            }
-        });
-        tableHtml += '</tbody>';
-        tableHtml += '</table>';
-
-        formattedResponse = formattedResponse.replace(fullTable, tableHtml);
-    }
-    
-    // Outros formatos (negrito, listas, parágrafos)
-    formattedResponse = formattedResponse
-        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-700">$1</strong>')
-        .replace(/^(###|##|#) (.*)$/m, (match, p1, p2) => {
-            const size = p1.length === 3 ? 'text-xl' : p1.length === 2 ? 'text-2xl' : 'text-3xl';
-            return `<h4 class="${size} font-bold mt-6 mb-2 text-gray-800">${p2}</h4>`;
-        })
-        .replace(/^\s*- (.*)$/gm, (match, p1) => `<li><i class="fas fa-circle text-blue-400 text-xs mr-2"></i>${p1}</li>`)
-        .replace(/(<br>|^)<li>/g, '<ul><li>')
-        .replace(/<\/li><br>/g, '</li>')
-        .replace(/<\/li><ul>/g, '</li></ul>')
-        .replace(/\n\n/g, '<p>')
-        .replace(/\n/g, '<br>')
-        .trim();
-
-    responseDiv.innerHTML = `<div class="prose max-w-none">${formattedResponse}</div>`;
-}
-
-function showError(message) {
-    loadingOverlay.classList.add('hidden');
-    resultsIcon.classList.add('hidden');
-    responseDiv.innerHTML = `
-        <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
-            <i class="fas fa-exclamation-triangle mr-2"></i>
-            ${message}
-        </div>
-    `;
-}
-
