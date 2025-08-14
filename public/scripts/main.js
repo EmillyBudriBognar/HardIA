@@ -278,6 +278,9 @@ function finishTest() {
 }
 
 
+
+
+
 //formata a mensagem para a ia
 function generateApiText() {
 
@@ -293,6 +296,10 @@ Software desejado: ${answers['software']}`;
     console.log(textContent);
     getOpenAIResponse(prompt + textContent);
 }
+
+
+
+
 
 
 //Envia e recebe resposta da ia
@@ -329,3 +336,89 @@ async function getOpenAIResponse(promptText) {
     console.error("Erro ao obter resposta:", error);
   }
 }
+
+
+
+
+
+
+// function formatResponse(responseText) {
+//     let formattedResponse = responseText;
+
+//     // Título de Compatibilidade
+//     const titleRegex = /^(✅|❌) (.*)/;
+//     if (formattedResponse.match(titleRegex)) {
+//         const [fullMatch, icon, title] = formattedResponse.match(titleRegex);
+//         if (icon === '❌') {
+//             resultsIcon.className = 'fas fa-times-circle text-red-500 text-5xl mb-4';
+//         } else {
+//             resultsIcon.className = 'fas fa-check-circle text-green-500 text-5xl mb-4';
+//         }
+//         resultsIcon.classList.remove('hidden');
+//         formattedResponse = formattedResponse.replace(fullMatch, `<h3 class="text-2xl font-bold text-gray-800 mb-3">${icon} ${title}</h3>`);
+//     }
+
+//     // Tabela
+//     const tableRegex = /\|(.*)\n\|---(.*)\n([\s\S]*?)(?=\n\n|$)/;
+//     const tableMatch = formattedResponse.match(tableRegex);
+
+//     if (tableMatch) {
+//         const [fullTable, headerLine, separatorLine, bodyContent] = tableMatch;
+//         const headers = headerLine.split('|').map(h => h.trim()).filter(h => h);
+//         const rows = bodyContent.split('\n').filter(r => r.trim() !== '');
+
+//         let tableHtml = '<table class="min-w-full divide-y divide-gray-200 mt-4 mb-4 shadow-sm rounded-lg overflow-hidden">';
+//         tableHtml += '<thead class="bg-blue-100">';
+//         tableHtml += '<tr>';
+//         headers.forEach(header => {
+//             tableHtml += `<th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">${header}</th>`;
+//         });
+//         tableHtml += '</tr>';
+//         tableHtml += '</thead>';
+//         tableHtml += '<tbody class="bg-white divide-y divide-gray-200">';
+
+//         rows.forEach(row => {
+//             const cells = row.split('|').map(c => c.trim()).filter(c => c);
+//             if (cells.length === headers.length) {
+//                 tableHtml += '<tr>';
+//                 cells.forEach(cell => {
+//                     tableHtml += `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${cell}</td>`;
+//                 });
+//                 tableHtml += '</tr>';
+//             }
+//         });
+//         tableHtml += '</tbody>';
+//         tableHtml += '</table>';
+
+//         formattedResponse = formattedResponse.replace(fullTable, tableHtml);
+//     }
+    
+//     // Outros formatos (negrito, listas, parágrafos)
+//     formattedResponse = formattedResponse
+//         .replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-700">$1</strong>')
+//         .replace(/^(###|##|#) (.*)$/m, (match, p1, p2) => {
+//             const size = p1.length === 3 ? 'text-xl' : p1.length === 2 ? 'text-2xl' : 'text-3xl';
+//             return `<h4 class="${size} font-bold mt-6 mb-2 text-gray-800">${p2}</h4>`;
+//         })
+//         .replace(/^\s*- (.*)$/gm, (match, p1) => `<li><i class="fas fa-circle text-blue-400 text-xs mr-2"></i>${p1}</li>`)
+//         .replace(/(<br>|^)<li>/g, '<ul><li>')
+//         .replace(/<\/li><br>/g, '</li>')
+//         .replace(/<\/li><ul>/g, '</li></ul>')
+//         .replace(/\n\n/g, '<p>')
+//         .replace(/\n/g, '<br>')
+//         .trim();
+
+//     responseDiv.innerHTML = `<div class="prose max-w-none">${formattedResponse}</div>`;
+// }
+
+// function showError(message) {
+//     loadingOverlay.classList.add('hidden');
+//     resultsIcon.classList.add('hidden');
+//     responseDiv.innerHTML = `
+//         <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
+//             <i class="fas fa-exclamation-triangle mr-2"></i>
+//             ${message}
+//         </div>
+//     `;
+// }
+
