@@ -14,34 +14,11 @@ O **HardIA** é uma plataforma inovadora que utiliza inteligência artificial pa
 
 ---
 
-## 🛠 Tecnologias Utilizadas
-
-### Backend
-* **Node.js (v18+)**
-* **Express:** Framework web
-* **Google Gemini API:** IA generativa
-* **Dotenv:** Gerenciamento de variáveis de ambiente
-
-### Frontend
-* **HTML5 & CSS3**
-* **Tailwind CSS:** Framework de estilização
-* **JavaScript (ES6+)**
-* **Font Awesome:** Biblioteca de ícones
-
-### Ferramentas
-* **Git:** Controle de versão
-* **VSCode:** Editor de código
-* **Figma:** Design de interface
-
----
-
 ## 🎯 Funcionalidades Principais
 
 * **Questionário Inteligente:** Coleta os detalhes da sua configuração de hardware de forma amigável e responsiva.
 * **Análise com IA:** Compara seu hardware com os requisitos de milhares de softwares, gerando um diagnóstico preciso em segundos.
 * **Recomendações Personalizadas:** Oferece sugestões claras de upgrades quando necessário e explicações sobre possíveis gargalos.
-* **Histórico de Consultas:** Armazena localmente os resultados das suas análises para fácil acesso.
-
 ---
 
 ## 👥 Equipe de Desenvolvimento
