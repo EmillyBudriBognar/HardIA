@@ -73,15 +73,15 @@ body {
     display: flex;
 }
 #loader {
-    position: fixed; /* Fixar o loader na tela */
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100vw; /* Largura total da tela */
-    height: 100vh; /* Altura total da tela */
+    width: 100vw; 
+    height: 100vh;
     align-items: center;
     justify-content: center;
-    background-color: rgba(0, 0, 0, 0.5); /* Fundo semitransparente */
-    z-index: 9999; /* Garantir que o loader fique sobre outros elementos */
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
 }
 
 .loader {
@@ -89,11 +89,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 6rem; /* Largura original do loader */
-    height: 6rem; /* Altura original do loader */
+    width: 6rem; 
+    height: 6rem; 
     max-width: 6rem;
     max-height: 6rem;
-    animation: pulse 2s infinite ease-in-out; /* Animando o loader */
+    animation: pulse 2s infinite ease-in-out; 
 }
 
 .loader:before,

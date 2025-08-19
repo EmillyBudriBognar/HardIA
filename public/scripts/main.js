@@ -100,7 +100,7 @@ prevBtn.addEventListener('click', goToPreviousQuestion);
 restartBtn.addEventListener('click', restartTest);
 
 function showLoader(){
-    console.log("ACHOU FDP")
+    console.log("OK")
 document.getElementById("loader").classList.add('show');
 document.getElementById("loader").classList.remove('hidden');
 }
