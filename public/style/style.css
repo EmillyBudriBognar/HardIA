@@ -60,19 +60,82 @@ body {
     transition: all 0.3s ease;
 }
 
-/* Novo estilo para o spinner */
-.loading-spinner {
-    width: 60px;
-    height: 60px;
-    border: 5px solid #e0e0e0;
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto;
-}
-
 @keyframes spin {
     to {
         transform: rotate(360deg);
+    }
+}
+
+.hidden{
+    display: none;
+}
+.show{
+    display: flex;
+}
+#loader {
+    position: fixed; /* Fixar o loader na tela */
+    top: 0;
+    left: 0;
+    width: 100vw; /* Largura total da tela */
+    height: 100vh; /* Altura total da tela */
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5); /* Fundo semitransparente */
+    z-index: 9999; /* Garantir que o loader fique sobre outros elementos */
+}
+
+.loader {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 6rem; /* Largura original do loader */
+    height: 6rem; /* Altura original do loader */
+    max-width: 6rem;
+    max-height: 6rem;
+    animation: pulse 2s infinite ease-in-out; /* Animando o loader */
+}
+
+.loader:before,
+.loader:after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    animation: pulsOut 1.8s ease-in-out infinite;
+    filter: drop-shadow(0 0 1rem rgba(255, 255, 255, 0.75));
+}
+
+.loader:before {
+    width: 100%;
+    padding-bottom: 100%;
+    box-shadow: inset 0 0 0 1rem #fff;
+    animation-name: pulsIn;
+}
+
+.loader:after {
+    width: calc(100% - 2rem);
+    padding-bottom: calc(100% - 2rem);
+    box-shadow: 0 0 0 0 #fff;
+}
+
+@keyframes pulsIn {
+    0% {
+        box-shadow: inset 0 0 0 1rem #fff;
+        opacity: 1;
+    }
+    50%, 100% {
+        box-shadow: inset 0 0 0 0 #fff;
+        opacity: 0;
+    }
+}
+
+@keyframes pulsOut {
+    0%, 50% {
+        box-shadow: 0 0 0 0 #fff;
+        opacity: 0;
+    }
+    100% {
+        box-shadow: 0 0 0 1rem #fff;
+        opacity: 1;
     }
 }
